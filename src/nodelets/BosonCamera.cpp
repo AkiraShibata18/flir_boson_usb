@@ -343,6 +343,7 @@ bool BosonCamera::openCamera()
   thermal16 = Mat(height, width, CV_16U, buffer_start);
   // OpenCV output buffer : Data used to display the video
   thermal8_linear = Mat(height, width, CV_8U, 1);
+  thermal8_norm = Mat(height, width, CV_8U, 1);
   thermal8_heatmap = Mat(height, width, CV_8UC3, 1);
   thermal16_linear = Mat(height, width, CV_16U, 1);
 
@@ -478,7 +479,14 @@ void BosonCamera::captureAndPublish(const ros::TimerEvent &evt)
       // 8bit image (auto range)
       double min, max;
       minMaxLoc(thermal8_linear, &min, &max);
-      Mat thermal8_norm = (thermal8_linear - min) * (255 - 0) / (max - min);;
+      if (max - min == 0)
+      {
+        thermal8_norm = thermal8_linear;
+      }
+      else
+      {
+        thermal8_norm = (thermal8_linear - min) * (255 - 0) / (max - min);;
+      }
       cv_img.image = thermal8_norm;
       cv_img.header.stamp = now;
       cv_img.header.frame_id = frame_id;
@@ -587,4 +595,5 @@ void BosonCamera::reconfigureCallback(
   point_y = config.point_y;
   max_temp_limit = config.max_temp_limit;
   min_temp_limit = config.min_temp_limit;
+  auto_range_offset = config.auto_range_offset;
 }
